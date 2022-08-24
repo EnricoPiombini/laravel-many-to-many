@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Post;
+use App\Tag;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 
@@ -123,8 +124,9 @@ class PostController extends Controller
     public function edit($slug)
     {
         $post = $this->findBySlug($slug);
+        $tags = Tag::all();
 
-        return view("admin.posts.edit", compact("post"));
+        return view("admin.posts.edit", compact("post", "tags"));
     }
 
     /**
@@ -136,15 +138,22 @@ class PostController extends Controller
      */
     public function update(Request $request, $slug)
     {
+
+        // dd($request->all());
+
         $validatedData = $request->validate([
             "title" => "required|min:10",
-            "content" => "required|min:10"
+            "content" => "required|min:10",
+            "tags"=>"nullable|exists:tags,id"
+            
         ]);
         $post = $this->findBySlug($slug);
 
         if ($validatedData["title"] !== $post->title) {
             // genero un nuovo slug
             $post->slug = $this->generateSlug($validatedData["title"]);
+
+            $post->tags()->attach($validatedData["tags"]);
         }
 
         $post->update($validatedData);
